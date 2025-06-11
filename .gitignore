@@ -7,3 +7,6 @@ dataset/*
 !dataset/test.wav
 !dataset/test_long.wav
 test.py
+original_skyrim_data/voicelines
+venv
+work
