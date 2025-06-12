@@ -52,25 +52,26 @@ def evaluate_once(
     *,
     test_data: str | Path,
     model_path: str | Path,
+    processor_src: str | Path,              # <-- NEW: where to get tokenizer/FE
     metric_name: str,
     language: str,
     local_files_only: bool,
 ) -> float:
-    """
-    Run a single evaluation and return the metric value.
-    `local_files_only` controls whether Hugging Face is allowed to fetch the model.
-    """
+    """Run a single evaluation and return the metric value."""
+    # —- processor always loaded from base model —
     processor = WhisperProcessor.from_pretrained(
-        model_path,
+        processor_src,
         language=language,
         task=TASK,
         no_timestamps=not TIMESTAMPS,
         local_files_only=local_files_only,
     )
+
+    # —- model weights from the specific checkpoint/path —
     model = WhisperForConditionalGeneration.from_pretrained(
         model_path,
         device_map="auto",
-        local_files_only=local_files_only,
+        local_files_only=True,               # always local for both cases below
     )
     model.generation_config.forced_decoder_ids = None
     model.eval()
@@ -163,30 +164,33 @@ def main() -> None:
     combos: List[Tuple[str, str]] = [
         ("dataset/test-skyrim.json", "skyrim"),
       #  ("dataset/test-skyrim.json", "wer"),
-      #  ("dataset/test-commonvoice.json", "wer"),
+        ("dataset/test-commonvoice.json", "wer"),
     ]
 
     # ------------------------------------------------------- #
     # base vs. fine-tuned                                     #
     # ------------------------------------------------------- #
     results = []
-    for suffix, label in (("", "BASE"), ("-finetune", "FINETUNED")):
-        if suffix:  # finetuned → must be local
-            model_path: Path | str = Path(f"models/{args.model}{suffix}")
+    for label in ("BASE", "FINETUNED"):
+        if label == "FINETUNED":
+            # weights path
+            model_path = Path(f"output/{args.model}/checkpoint-final")
+            # processor from original base model
+            processor_src = f"openai/{args.model}"
             local_only = True
-        else:  # base model: use local copy if present, otherwise download
-            local_path = Path(f"models/{args.model}")
-            if local_path.exists():
-                model_path = local_path
+        else:  # BASE
+            local_cp = Path(f"models/{args.model}")
+            if local_cp.exists():
+                model_path = processor_src = local_cp
                 local_only = True
             else:
-                model_path = f"openai/{args.model}"
-                local_only = False
-
+                model_path = processor_src = f"openai/{args.model}"
+                local_only = False  
         for test_file, metric in combos:
             score = evaluate_once(
                 test_data=test_file,
                 model_path=model_path,
+                processor_src=processor_src,
                 metric_name=metric,
                 language=args.language,
                 local_files_only=local_only,
@@ -199,6 +203,7 @@ def main() -> None:
                     "Score": score,
                 }
             )
+
 
     # ------------------------------------------------------- #
     #                Nicely format the results                #

@@ -1,0 +1,19 @@
+========== TINY FINAL RESULTS  ==========
+Model      │ Metric  │ Test-set          │    Score
+───────────┼─────────┼───────────────────┼──────────
+BASE       │ skyrim  │ test-skyrim       │  0.56421
+BASE       │ wer     │ test-skyrim       │  0.20314
+BASE       │ wer     │ test-commonvoice  │  0.62447
+FINETUNED  │ skyrim  │ test-skyrim       │  0.55556
+FINETUNED  │ wer     │ test-skyrim       │  0.19583
+FINETUNED  │ wer     │ test-commonvoice  │  0.59467
+=====================================
+
+==========  LARGE V3 TURBO RESULTS  ==========
+Model      │ Metric  │ Test-set          │    Score
+───────────┼─────────┼───────────────────┼──────────
+BASE       │ skyrim  │ test-skyrim       │  0.34217
+BASE       │ wer     │ test-commonvoice  │  0.40232
+FINETUNED  │ skyrim  │ test-skyrim       │  0.12825
+FINETUNED  │ wer     │ test-commonvoice  │  0.41662
+=====================================
